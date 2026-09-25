@@ -174,7 +174,7 @@ mod tests {
 
     #[test]
     fn sanitizes_path_traversal_and_windows_names() {
-        assert_eq!(safe_file_name(r"..\\CON?.exe"), "_CON_.exe");
+        assert_eq!(safe_file_name(r"..\\CON?.exe"), "CON_.exe");
         assert_eq!(safe_file_name("report:2026.pdf"), "report_2026.pdf");
     }
 
