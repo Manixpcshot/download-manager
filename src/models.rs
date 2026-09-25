@@ -107,8 +107,9 @@ impl DownloadRecord {
 
     pub fn progress(&self) -> f32 {
         match self.total_bytes {
-            Some(total) if total > 0 => (self.downloaded_bytes as f64 / total as f64)
-                .clamp(0.0, 1.0) as f32,
+            Some(total) if total > 0 => {
+                (self.downloaded_bytes as f64 / total as f64).clamp(0.0, 1.0) as f32
+            }
             Some(_) => 0.0,
             None => 0.0,
         }

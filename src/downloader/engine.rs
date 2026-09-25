@@ -1,6 +1,9 @@
 use anyhow::{anyhow, bail, Context, Result};
 use reqwest::blocking::{Client, ClientBuilder};
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ACCEPT_RANGES, CONTENT_RANGE, CONTENT_TYPE, RANGE, USER_AGENT};
+use reqwest::header::{
+    HeaderMap, HeaderName, HeaderValue, ACCEPT_RANGES, CONTENT_RANGE, CONTENT_TYPE, RANGE,
+    USER_AGENT,
+};
 use reqwest::StatusCode;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, VecDeque};
@@ -32,13 +35,20 @@ pub struct EngineConfig {
 impl From<&Settings> for EngineConfig {
     fn from(settings: &Settings) -> Self {
         Self {
-            max_concurrent_downloads: settings.downloads.maximum_simultaneous_downloads.clamp(1, 32),
+            max_concurrent_downloads: settings
+                .downloads
+                .maximum_simultaneous_downloads
+                .clamp(1, 32),
             max_connections_per_download: settings
                 .downloads
                 .maximum_connections_per_download
                 .clamp(1, 16),
-            speed_limit_bps: (settings.downloads.download_speed_limit_kbps > 0)
-                .then_some(settings.downloads.download_speed_limit_kbps.saturating_mul(1024)),
+            speed_limit_bps: (settings.downloads.download_speed_limit_kbps > 0).then_some(
+                settings
+                    .downloads
+                    .download_speed_limit_kbps
+                    .saturating_mul(1024),
+            ),
             timeout: duration_from_secs(settings.network.connection_timeout_seconds),
             retry_count: settings.network.retry_count.min(20),
             proxy: (!settings.network.proxy.trim().is_empty())
@@ -117,15 +127,19 @@ impl DownloadEngine {
     }
 
     pub fn start_queue(&self, records: Vec<DownloadRecord>) {
-        let _ = self.command_tx.send(SchedulerMessage::Command(
-            EngineCommand::StartQueue(records),
-        ));
+        let _ = self
+            .command_tx
+            .send(SchedulerMessage::Command(EngineCommand::StartQueue(
+                records,
+            )));
     }
 
     pub fn pause(&self, id: &str) {
-        let _ = self.command_tx.send(SchedulerMessage::Command(
-            EngineCommand::Pause(id.to_owned()),
-        ));
+        let _ = self
+            .command_tx
+            .send(SchedulerMessage::Command(EngineCommand::Pause(
+                id.to_owned(),
+            )));
     }
 
     pub fn resume(&self, record: DownloadRecord) {
@@ -135,9 +149,11 @@ impl DownloadEngine {
     }
 
     pub fn cancel(&self, id: &str) {
-        let _ = self.command_tx.send(SchedulerMessage::Command(
-            EngineCommand::Cancel(id.to_owned()),
-        ));
+        let _ = self
+            .command_tx
+            .send(SchedulerMessage::Command(EngineCommand::Cancel(
+                id.to_owned(),
+            )));
     }
 
     pub fn pause_all(&self) {
@@ -159,9 +175,9 @@ impl DownloadEngine {
     }
 
     pub fn set_config(&self, config: EngineConfig) {
-        let _ = self.command_tx.send(SchedulerMessage::Command(
-            EngineCommand::SetConfig(config),
-        ));
+        let _ = self
+            .command_tx
+            .send(SchedulerMessage::Command(EngineCommand::SetConfig(config)));
     }
 
     pub fn try_event(&self) -> Option<DownloadEvent> {
@@ -354,13 +370,17 @@ fn handle_scheduler_message(
     match command {
         EngineCommand::Start(record) => {
             *queue_paused = false;
-            enqueue_record(record, waiting, active, config, event_tx, worker_tx, database);
+            enqueue_record(
+                record, waiting, active, config, event_tx, worker_tx, database,
+            );
         }
         EngineCommand::StartQueue(records) => {
             *queue_paused = false;
             *resume_after_pause = false;
             for record in records {
-                enqueue_record(record, waiting, active, config, event_tx, worker_tx, database);
+                enqueue_record(
+                    record, waiting, active, config, event_tx, worker_tx, database,
+                );
             }
         }
         EngineCommand::Pause(id) => {
@@ -379,7 +399,9 @@ fn handle_scheduler_message(
             if let Some(job) = active.get(&record.id) {
                 job.control.paused.store(false, Ordering::Release);
             } else {
-                enqueue_record(record, waiting, active, config, event_tx, worker_tx, database);
+                enqueue_record(
+                    record, waiting, active, config, event_tx, worker_tx, database,
+                );
             }
         }
         EngineCommand::Cancel(id) => {
@@ -544,7 +566,9 @@ fn probe(client: &Client, url: &str) -> Result<RemoteInfo> {
             accepts_ranges = true;
             if let Some(range) = response.headers().get(CONTENT_RANGE) {
                 if let Ok(range) = range.to_str() {
-                    if let Some(total) = range.split('/').nth(1).and_then(|value| value.parse().ok()) {
+                    if let Some(total) =
+                        range.split('/').nth(1).and_then(|value| value.parse().ok())
+                    {
                         total_bytes = Some(total);
                     }
                 }
@@ -602,7 +626,8 @@ fn run_download(
     record.total_bytes = remote.total_bytes;
     record.content_type = remote.content_type.clone();
     if let Ok(database) = database.lock() {
-        let _ = database.update_progress(&id, record.downloaded_bytes, record.total_bytes, 0.0, None);
+        let _ =
+            database.update_progress(&id, record.downloaded_bytes, record.total_bytes, 0.0, None);
     }
     let _ = event_tx.send(DownloadEvent::Metadata {
         id: id.clone(),
@@ -612,13 +637,23 @@ fn run_download(
 
     let partial_dir = partial_directory(&target, &id);
     if let Err(error) = fs::create_dir_all(&partial_dir) {
-        return fail_download(&record, &database, &event_tx, error.to_string(), record.downloaded_bytes);
+        return fail_download(
+            &record,
+            &database,
+            &event_tx,
+            error.to_string(),
+            record.downloaded_bytes,
+        );
     }
 
     let segment_count = match remote.total_bytes {
         Some(total) if remote.accepts_ranges && total > 0 => {
-            let requested = record.connections.clamp(1, config.max_connections_per_download);
-            requested.min(total.div_ceil(512 * 1024).max(1) as u32).max(1) as usize
+            let requested = record
+                .connections
+                .clamp(1, config.max_connections_per_download);
+            requested
+                .min(total.div_ceil(512 * 1024).max(1) as u32)
+                .max(1) as usize
         }
         _ => 1,
     };
@@ -718,7 +753,9 @@ fn run_download(
     ) {
         return fail_download(&record, &database, &event_tx, error.to_string(), downloaded);
     }
-    let final_size = fs::metadata(&target).map(|metadata| metadata.len()).unwrap_or(downloaded);
+    let final_size = fs::metadata(&target)
+        .map(|metadata| metadata.len())
+        .unwrap_or(downloaded);
     if let Err(error) = fs::remove_dir_all(&partial_dir) {
         // A completed file is valid even if cleanup was delayed by antivirus software. Keep the
         // warning in the persisted error column only when the file itself is not present.
@@ -776,13 +813,8 @@ fn fail_download(
     downloaded_bytes: u64,
 ) -> WorkerOutcome {
     if let Ok(database) = database.lock() {
-        let _ = database.update_progress(
-            &record.id,
-            downloaded_bytes,
-            record.total_bytes,
-            0.0,
-            None,
-        );
+        let _ =
+            database.update_progress(&record.id, downloaded_bytes, record.total_bytes, 0.0, None);
         let _ = database.update_status(&record.id, DownloadStatus::Failed, Some(&error), None);
     }
     let _ = event_tx.send(DownloadEvent::Failed {
@@ -816,7 +848,10 @@ fn make_segments(total: Option<u64>, count: usize) -> Vec<Segment> {
                 .filter(|segment| segment.start <= segment.end.unwrap_or(0))
                 .collect()
         }
-        _ => vec![Segment { start: 0, end: None }],
+        _ => vec![Segment {
+            start: 0,
+            end: None,
+        }],
     }
 }
 
@@ -842,7 +877,11 @@ fn download_segment(
 ) -> Result<SegmentOutcome> {
     let expected_length = segment.end.map(|end| end - segment.start + 1);
     if let Some(expected) = expected_length {
-        if fs::metadata(&path).map(|metadata| metadata.len()).unwrap_or(0) >= expected {
+        if fs::metadata(&path)
+            .map(|metadata| metadata.len())
+            .unwrap_or(0)
+            >= expected
+        {
             return Ok(SegmentOutcome::Completed);
         }
     }
@@ -859,7 +898,9 @@ fn download_segment(
             bail!("another segment failed");
         }
 
-        let mut current = fs::metadata(&path).map(|metadata| metadata.len()).unwrap_or(0);
+        let mut current = fs::metadata(&path)
+            .map(|metadata| metadata.len())
+            .unwrap_or(0);
         if !accepts_ranges && current > 0 {
             current = 0;
             let _ = File::create(&path)?;
@@ -920,7 +961,9 @@ fn download_segment(
             file.write_all(&buffer[..bytes])?;
             tracker.add(bytes as u64);
             if let Some(expected) = expected_length {
-                let length = fs::metadata(&path).map(|metadata| metadata.len()).unwrap_or(0);
+                let length = fs::metadata(&path)
+                    .map(|metadata| metadata.len())
+                    .unwrap_or(0);
                 if length > expected {
                     abort_on_error.store(true, Ordering::Release);
                     bail!("server sent more bytes than the requested segment");
@@ -928,13 +971,17 @@ fn download_segment(
             }
         }
         file.flush()?;
-        let current = fs::metadata(&path).map(|metadata| metadata.len()).unwrap_or(0);
+        let current = fs::metadata(&path)
+            .map(|metadata| metadata.len())
+            .unwrap_or(0);
         if let Some(expected) = expected_length {
             if current >= expected {
                 return Ok(SegmentOutcome::Completed);
             }
             if read_error.is_none() {
-                read_error = Some(format!("connection ended early ({current}/{expected} bytes)"));
+                read_error = Some(format!(
+                    "connection ended early ({current}/{expected} bytes)"
+                ));
             }
         } else if read_error.is_none() {
             return Ok(SegmentOutcome::Completed);
@@ -1009,12 +1056,15 @@ impl ProgressTracker {
         };
         let now = Instant::now();
         let elapsed = now.duration_since(state.last_report);
-        if elapsed < Duration::from_millis(250) && self.total.map(|total| current < total).unwrap_or(true) {
+        if elapsed < Duration::from_millis(250)
+            && self.total.map(|total| current < total).unwrap_or(true)
+        {
             return;
         }
-        let interval_speed = (current.saturating_sub(state.last_bytes)) as f64
-            / elapsed.as_secs_f64().max(0.001);
-        let average_speed = current as f64 / now.duration_since(state.started).as_secs_f64().max(0.001);
+        let interval_speed =
+            (current.saturating_sub(state.last_bytes)) as f64 / elapsed.as_secs_f64().max(0.001);
+        let average_speed =
+            current as f64 / now.duration_since(state.started).as_secs_f64().max(0.001);
         let speed = if interval_speed.is_finite() && interval_speed > 0.0 {
             interval_speed
         } else {
@@ -1096,12 +1146,17 @@ fn assemble_segments(
     let mut buffer = vec![0_u8; 128 * 1024];
     for (index, segment) in segments.iter().enumerate() {
         let part = partial_dir.join(format!("{index:04}.part"));
-        let metadata = fs::metadata(&part)
-            .with_context(|| format!("missing segment {}", part.display()))?;
+        let metadata =
+            fs::metadata(&part).with_context(|| format!("missing segment {}", part.display()))?;
         if let Some(end) = segment.end {
             let expected = end - segment.start + 1;
             if metadata.len() != expected {
-                bail!("incomplete segment {} ({}/{})", index + 1, metadata.len(), expected);
+                bail!(
+                    "incomplete segment {} ({}/{})",
+                    index + 1,
+                    metadata.len(),
+                    expected
+                );
             }
         }
         let mut input = File::open(&part)?;
@@ -1131,4 +1186,3 @@ fn assemble_segments(
         .with_context(|| format!("cannot finalize downloaded file {}", target.display()))?;
     Ok(())
 }
-

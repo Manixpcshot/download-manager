@@ -18,7 +18,7 @@ fn main() -> eframe::Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_title("Pulse Download Manager")
             .with_inner_size([1280.0, 820.0])
-            .with_min_inner_size([980.0, 620.0]),
+            .with_min_inner_size([760.0, 560.0]),
         ..Default::default()
     };
     eframe::run_native(

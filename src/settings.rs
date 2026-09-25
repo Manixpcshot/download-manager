@@ -68,8 +68,9 @@ impl Default for Settings {
                 connection_timeout_seconds: 30,
                 retry_count: 4,
                 proxy: String::new(),
-                user_agent: "PulseDownloadManager/0.1 (+https://github.com/Manixpcshot/download-manager)"
-                    .to_owned(),
+                user_agent:
+                    "PulseDownloadManager/0.1 (+https://github.com/Manixpcshot/download-manager)"
+                        .to_owned(),
                 additional_headers: String::new(),
             },
             appearance: AppearanceSettings {
@@ -121,25 +122,18 @@ impl Settings {
         if path.exists() {
             fs::remove_file(&path)?;
         }
-        fs::rename(&temporary, &path).with_context(|| {
-            format!("cannot replace settings file {}", path.display())
-        })?;
+        fs::rename(&temporary, &path)
+            .with_context(|| format!("cannot replace settings file {}", path.display()))?;
         Ok(())
     }
 
     pub fn ensure_valid(&mut self) {
-        self.downloads.maximum_simultaneous_downloads = self
-            .downloads
-            .maximum_simultaneous_downloads
-            .clamp(1, 32);
-        self.downloads.maximum_connections_per_download = self
-            .downloads
-            .maximum_connections_per_download
-            .clamp(1, 16);
-        self.network.connection_timeout_seconds = self
-            .network
-            .connection_timeout_seconds
-            .clamp(5, 600);
+        self.downloads.maximum_simultaneous_downloads =
+            self.downloads.maximum_simultaneous_downloads.clamp(1, 32);
+        self.downloads.maximum_connections_per_download =
+            self.downloads.maximum_connections_per_download.clamp(1, 16);
+        self.network.connection_timeout_seconds =
+            self.network.connection_timeout_seconds.clamp(5, 600);
         self.network.retry_count = self.network.retry_count.min(20);
         self.appearance.ui_scale = self.appearance.ui_scale.clamp(0.8, 1.5);
         if self.apps_api_url.trim().is_empty() {

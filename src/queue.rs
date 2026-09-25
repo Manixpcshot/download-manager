@@ -8,7 +8,10 @@ pub fn is_waiting(record: &DownloadRecord) -> bool {
 }
 
 pub fn is_startable(record: &DownloadRecord) -> bool {
-    matches!(record.status, DownloadStatus::Queued | DownloadStatus::Paused)
+    matches!(
+        record.status,
+        DownloadStatus::Queued | DownloadStatus::Paused
+    )
 }
 
 pub fn sort_by_priority(records: &mut [DownloadRecord]) {
