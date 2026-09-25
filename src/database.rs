@@ -184,5 +184,4 @@ impl Database {
             .execute("DELETE FROM downloads WHERE id = ?1", [id])?;
         Ok(())
     }
-
 }

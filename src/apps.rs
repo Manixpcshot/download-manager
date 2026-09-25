@@ -87,8 +87,9 @@ fn fetch_catalog(endpoint: &str) -> Result<Vec<AppItem>> {
     };
     let mut valid = Vec::with_capacity(items.len());
     for item in items {
-        validate_download_url(&item.download_url)
-            .map_err(|error| anyhow::anyhow!("App {} has an invalid download URL: {error}", item.name))?;
+        validate_download_url(&item.download_url).map_err(|error| {
+            anyhow::anyhow!("App {} has an invalid download URL: {error}", item.name)
+        })?;
         valid.push(item);
     }
     Ok(valid)

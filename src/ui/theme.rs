@@ -188,7 +188,10 @@ impl Tokens {
     pub fn pill(&self, text: impl Into<egui::WidgetText>, color: Color32) -> Button {
         Button::new(text.into())
             .fill(tint(color, if self.dark { 34 } else { 26 }))
-            .stroke(Stroke::new(1.0, tint(color, if self.dark { 96 } else { 80 })))
+            .stroke(Stroke::new(
+                1.0,
+                tint(color, if self.dark { 96 } else { 80 }),
+            ))
             .rounding(Rounding::same(999.0))
             .min_size(egui::vec2(0.0, 24.0))
     }
@@ -269,7 +272,11 @@ fn surface_shadow(dark: bool) -> Shadow {
 /// stays identical when the user switches themes.
 pub fn apply(context: &Context, accent: Color32, dark: bool) {
     let t = tokens(dark, accent);
-    let mut visuals = if dark { Visuals::dark() } else { Visuals::light() };
+    let mut visuals = if dark {
+        Visuals::dark()
+    } else {
+        Visuals::light()
+    };
 
     visuals.override_text_color = Some(t.text);
     visuals.panel_fill = t.bg;
@@ -337,11 +344,23 @@ pub fn apply(context: &Context, accent: Color32, dark: bool) {
         style.spacing.slider_width = 190.0;
         style.spacing.combo_width = 170.0;
         style.text_styles = [
-            (TextStyle::Heading, FontId::new(20.0, FontFamily::Proportional)),
+            (
+                TextStyle::Heading,
+                FontId::new(20.0, FontFamily::Proportional),
+            ),
             (TextStyle::Body, FontId::new(13.0, FontFamily::Proportional)),
-            (TextStyle::Button, FontId::new(13.0, FontFamily::Proportional)),
-            (TextStyle::Small, FontId::new(11.5, FontFamily::Proportional)),
-            (TextStyle::Monospace, FontId::new(12.5, FontFamily::Monospace)),
+            (
+                TextStyle::Button,
+                FontId::new(13.0, FontFamily::Proportional),
+            ),
+            (
+                TextStyle::Small,
+                FontId::new(11.5, FontFamily::Proportional),
+            ),
+            (
+                TextStyle::Monospace,
+                FontId::new(12.5, FontFamily::Monospace),
+            ),
         ]
         .into();
     });

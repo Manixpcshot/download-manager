@@ -1,6 +1,9 @@
 use anyhow::Result;
 use chrono::Utc;
-use eframe::egui::{self, Align, Align2, Color32, FontId, Frame, Layout, Margin, RichText, Rounding, ScrollArea, Stroke, Ui, Vec2, Window};
+use eframe::egui::{
+    self, Align, Align2, Color32, FontId, Frame, Layout, Margin, RichText, Rounding, ScrollArea,
+    Stroke, Ui, Vec2, Window,
+};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -169,9 +172,13 @@ impl DownloadManagerApp {
             }
         }
 
-        let accent = utils::parse_hex_color(&settings.appearance.accent_color, Color32::from_rgb(124, 108, 255));
+        let accent = utils::parse_hex_color(
+            &settings.appearance.accent_color,
+            Color32::from_rgb(124, 108, 255),
+        );
         theme::apply(&cc.egui_ctx, accent, settings.appearance.dark_mode);
-        cc.egui_ctx.set_pixels_per_point(settings.appearance.ui_scale);
+        cc.egui_ctx
+            .set_pixels_per_point(settings.appearance.ui_scale);
         let engine = DownloadEngine::new(Arc::clone(&database), EngineConfig::from(&settings));
         let mut app = Self {
             settings,
@@ -213,8 +220,7 @@ impl DownloadManagerApp {
                 NotificationKind::Error,
             );
         }
-        self.engine
-            .set_config(EngineConfig::from(&self.settings));
+        self.engine.set_config(EngineConfig::from(&self.settings));
     }
 
     fn apply_appearance(&mut self, ctx: &egui::Context) {
@@ -293,7 +299,8 @@ impl DownloadManagerApp {
                     self.mutate_record(&id, |record| {
                         record.status = DownloadStatus::Completed;
                         record.save_path = path;
-                        record.downloaded_bytes = record.total_bytes.unwrap_or(record.downloaded_bytes);
+                        record.downloaded_bytes =
+                            record.total_bytes.unwrap_or(record.downloaded_bytes);
                         record.total_bytes = Some(record.downloaded_bytes);
                         record.speed_bps = 0.0;
                         record.eta_seconds = Some(0);
@@ -302,7 +309,11 @@ impl DownloadManagerApp {
                         completed_name = Some(record.file_name.clone());
                     });
                     if let Some(name) = completed_name {
-                        self.notifications.push("Download complete", name, NotificationKind::Success);
+                        self.notifications.push(
+                            "Download complete",
+                            name,
+                            NotificationKind::Success,
+                        );
                     }
                 }
                 DownloadEvent::Cancelled {
@@ -334,7 +345,8 @@ impl DownloadManagerApp {
                         record.eta_seconds = None;
                         record.error = Some(error_for_record);
                     });
-                    self.notifications.push("Download failed", error, NotificationKind::Error);
+                    self.notifications
+                        .push("Download failed", error, NotificationKind::Error);
                 }
             }
         }
@@ -390,7 +402,9 @@ impl DownloadManagerApp {
                             .and_then(|extension| extension.to_str())
                             .map(|extension| extension.eq_ignore_ascii_case("url"))
                             .unwrap_or(false);
-                        is_url_shortcut.then(|| utils::parse_url_file(path)).flatten()
+                        is_url_shortcut
+                            .then(|| utils::parse_url_file(path))
+                            .flatten()
                     })
                 })
                 .collect()
@@ -427,9 +441,19 @@ impl DownloadManagerApp {
     }
 
     fn copy_text(&mut self, value: &str) {
-        match arboard::Clipboard::new().and_then(|mut clipboard| clipboard.set_text(value.to_owned())) {
-            Ok(()) => self.notifications.push("Copied", "URL copied to the clipboard", NotificationKind::Info),
-            Err(error) => self.notifications.push("Clipboard unavailable", error.to_string(), NotificationKind::Warning),
+        match arboard::Clipboard::new()
+            .and_then(|mut clipboard| clipboard.set_text(value.to_owned()))
+        {
+            Ok(()) => self.notifications.push(
+                "Copied",
+                "URL copied to the clipboard",
+                NotificationKind::Info,
+            ),
+            Err(error) => self.notifications.push(
+                "Clipboard unavailable",
+                error.to_string(),
+                NotificationKind::Warning,
+            ),
         }
     }
 
@@ -452,9 +476,14 @@ impl DownloadManagerApp {
         };
         if !dialog.checksum.trim().is_empty()
             && (dialog.checksum.trim().len() != 64
-                || !dialog.checksum.trim().chars().all(|character| character.is_ascii_hexdigit()))
+                || !dialog
+                    .checksum
+                    .trim()
+                    .chars()
+                    .all(|character| character.is_ascii_hexdigit()))
         {
-            dialog.error = Some("SHA-256 must contain exactly 64 hexadecimal characters".to_owned());
+            dialog.error =
+                Some("SHA-256 must contain exactly 64 hexadecimal characters".to_owned());
             self.add_dialog = Some(dialog);
             return;
         }
@@ -466,14 +495,28 @@ impl DownloadManagerApp {
             save_path.to_string_lossy().into_owned(),
             self.settings.downloads.maximum_connections_per_download,
         );
-        record.expected_sha256 = (!dialog.checksum.trim().is_empty()).then(|| dialog.checksum.trim().to_ascii_lowercase());
-        if let Err(error) = self.database.lock().map_err(|_| anyhow::anyhow!("database lock is poisoned")).and_then(|database| database.insert(&record)) {
-            self.notifications.push("Could not add download", error.to_string(), NotificationKind::Error);
+        record.expected_sha256 = (!dialog.checksum.trim().is_empty())
+            .then(|| dialog.checksum.trim().to_ascii_lowercase());
+        if let Err(error) = self
+            .database
+            .lock()
+            .map_err(|_| anyhow::anyhow!("database lock is poisoned"))
+            .and_then(|database| database.insert(&record))
+        {
+            self.notifications.push(
+                "Could not add download",
+                error.to_string(),
+                NotificationKind::Error,
+            );
             return;
         }
         let should_start = self.settings.downloads.auto_start_downloads;
         self.records.insert(0, record.clone());
-        self.notifications.push("Download added", record.file_name.clone(), NotificationKind::Info);
+        self.notifications.push(
+            "Download added",
+            record.file_name.clone(),
+            NotificationKind::Info,
+        );
         if should_start {
             self.queue_running = true;
             self.engine.start(record);
@@ -482,7 +525,11 @@ impl DownloadManagerApp {
 
     fn download_app(&mut self, item: AppItem) {
         let Ok(url) = utils::validate_download_url(&item.download_url) else {
-            self.notifications.push("App cannot be downloaded", "The catalog contains an invalid URL", NotificationKind::Error);
+            self.notifications.push(
+                "App cannot be downloaded",
+                "The catalog contains an invalid URL",
+                NotificationKind::Error,
+            );
             return;
         };
         let mut file_name = utils::guess_file_name(url.as_str());
@@ -498,12 +545,22 @@ impl DownloadManagerApp {
         );
         record.total_bytes = item.size_bytes;
         record.expected_sha256 = item.sha256.clone();
-        if let Err(error) = self.database.lock().map_err(|_| anyhow::anyhow!("database lock is poisoned")).and_then(|database| database.insert(&record)) {
-            self.notifications.push("Could not add app", error.to_string(), NotificationKind::Error);
+        if let Err(error) = self
+            .database
+            .lock()
+            .map_err(|_| anyhow::anyhow!("database lock is poisoned"))
+            .and_then(|database| database.insert(&record))
+        {
+            self.notifications.push(
+                "Could not add app",
+                error.to_string(),
+                NotificationKind::Error,
+            );
             return;
         }
         self.records.insert(0, record.clone());
-        self.notifications.push("App added to downloads", file_name, NotificationKind::Info);
+        self.notifications
+            .push("App added to downloads", file_name, NotificationKind::Info);
         if self.settings.downloads.auto_start_downloads {
             self.queue_running = true;
             self.engine.start(record);
@@ -552,12 +609,20 @@ impl DownloadManagerApp {
             }
             RecordAction::Open => {
                 if let Err(error) = system::open_file(record.destination()) {
-                    self.notifications.push("Cannot open file", error.to_string(), NotificationKind::Error);
+                    self.notifications.push(
+                        "Cannot open file",
+                        error.to_string(),
+                        NotificationKind::Error,
+                    );
                 }
             }
             RecordAction::Folder => {
                 if let Err(error) = system::open_folder(record.destination()) {
-                    self.notifications.push("Cannot open folder", error.to_string(), NotificationKind::Error);
+                    self.notifications.push(
+                        "Cannot open folder",
+                        error.to_string(),
+                        NotificationKind::Error,
+                    );
                 }
             }
             RecordAction::Copy => self.copy_text(&record.url),
@@ -578,7 +643,11 @@ impl DownloadManagerApp {
         if record.status.is_active() {
             self.pending_delete = Some(id.to_owned());
             self.engine.cancel(id);
-            self.notifications.push("Stopping download", "The item will be removed when its worker exits", NotificationKind::Info);
+            self.notifications.push(
+                "Stopping download",
+                "The item will be removed when its worker exits",
+                NotificationKind::Info,
+            );
             return;
         }
         self.delete_record_immediately(id);
@@ -646,7 +715,12 @@ impl DownloadManagerApp {
             .filter(|record| {
                 let filter_matches = match self.filter {
                     StatusFilter::All => true,
-                    StatusFilter::Active => matches!(record.status, DownloadStatus::Queued | DownloadStatus::Downloading | DownloadStatus::Paused),
+                    StatusFilter::Active => matches!(
+                        record.status,
+                        DownloadStatus::Queued
+                            | DownloadStatus::Downloading
+                            | DownloadStatus::Paused
+                    ),
                     StatusFilter::Completed => record.status == DownloadStatus::Completed,
                     StatusFilter::Failed => record.status == DownloadStatus::Failed,
                 };
@@ -659,9 +733,20 @@ impl DownloadManagerApp {
             .collect::<Vec<_>>();
         match self.sort {
             SortKey::Recent => records.sort_by_key(|record| std::cmp::Reverse(record.created_at)),
-            SortKey::Name => records.sort_by(|left, right| left.file_name.to_lowercase().cmp(&right.file_name.to_lowercase())),
-            SortKey::Size => records.sort_by(|left, right| right.total_bytes.unwrap_or(0).cmp(&left.total_bytes.unwrap_or(0))),
-            SortKey::Status => records.sort_by(|left, right| left.status.label().cmp(right.status.label())),
+            SortKey::Name => records.sort_by(|left, right| {
+                left.file_name
+                    .to_lowercase()
+                    .cmp(&right.file_name.to_lowercase())
+            }),
+            SortKey::Size => records.sort_by(|left, right| {
+                right
+                    .total_bytes
+                    .unwrap_or(0)
+                    .cmp(&left.total_bytes.unwrap_or(0))
+            }),
+            SortKey::Status => {
+                records.sort_by(|left, right| left.status.label().cmp(right.status.label()))
+            }
         }
         records
     }
@@ -692,8 +777,11 @@ impl DownloadManagerApp {
     fn open_download_folder(&mut self) {
         let folder = self.settings.default_folder_path();
         if let Err(error) = system::open_folder(&folder) {
-            self.notifications
-                .push("Cannot open folder", error.to_string(), NotificationKind::Error);
+            self.notifications.push(
+                "Cannot open folder",
+                error.to_string(),
+                NotificationKind::Error,
+            );
         }
     }
 
@@ -1001,9 +1089,24 @@ impl DownloadManagerApp {
             .map(|record| record.speed_bps)
             .sum::<f64>();
         let stats = [
-            ("All downloads", total.to_string(), "Tracked locally", t.info),
-            ("Active now", active.to_string(), "Running or queued", t.accent),
-            ("Completed", completed.to_string(), "Ready to open", t.success),
+            (
+                "All downloads",
+                total.to_string(),
+                "Tracked locally",
+                t.info,
+            ),
+            (
+                "Active now",
+                active.to_string(),
+                "Running or queued",
+                t.accent,
+            ),
+            (
+                "Completed",
+                completed.to_string(),
+                "Ready to open",
+                t.success,
+            ),
             (
                 "Current speed",
                 utils::format_speed(speed),
@@ -1047,10 +1150,7 @@ impl DownloadManagerApp {
                 let text = RichText::new(format!("{label}   {count}"))
                     .size(12.5)
                     .color(if selected { t.text } else { t.muted });
-                if ui
-                    .add(egui::SelectableLabel::new(selected, text))
-                    .clicked()
-                {
+                if ui.add(egui::SelectableLabel::new(selected, text)).clicked() {
                     self.filter = filter;
                     self.page = match filter {
                         StatusFilter::Completed => Page::Completed,
@@ -1087,13 +1187,18 @@ impl DownloadManagerApp {
                 file_badge(ui, record);
                 ui.add_space(12.0);
                 ui.vertical(|ui| {
-                    ui.label(RichText::new(truncate(&record.file_name, 58)).size(14.5).strong());
+                    ui.label(
+                        RichText::new(truncate(&record.file_name, 58))
+                            .size(14.5)
+                            .strong(),
+                    );
                     ui.label(t.faint_text(truncate(&record.url, 76)));
                 });
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    ui.add(
-                        t.pill(theme::status_label(record.status, status_color), status_color),
-                    );
+                    ui.add(t.pill(
+                        theme::status_label(record.status, status_color),
+                        status_color,
+                    ));
                 });
             });
             ui.add_space(12.0);
@@ -1147,7 +1252,10 @@ impl DownloadManagerApp {
                 utils::format_bytes(record.downloaded_bytes),
                 utils::format_bytes(total)
             ),
-            None => format!("{} downloaded", utils::format_bytes(record.downloaded_bytes)),
+            None => format!(
+                "{} downloaded",
+                utils::format_bytes(record.downloaded_bytes)
+            ),
         };
         ui.label(t.faint_text(size));
         meta_separator(ui, t);
@@ -1319,10 +1427,7 @@ impl DownloadManagerApp {
                                     .strong(),
                                 );
                                 meta_separator(ui, &t);
-                                ui.label(t.muted_text(format!(
-                                    "{} waiting",
-                                    self.queue_count()
-                                )));
+                                ui.label(t.muted_text(format!("{} waiting", self.queue_count())));
                                 meta_separator(ui, &t);
                                 ui.label(t.muted_text(limit_label.clone()));
                                 meta_separator(ui, &t);
@@ -1365,36 +1470,39 @@ impl DownloadManagerApp {
                                                 record.priority.max(0)
                                             )));
                                         });
-                                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                                            if ui.add(t.subtle_button("Delete")).clicked() {
-                                                record_action = Some((
-                                                    record.id.clone(),
-                                                    RecordAction::Delete,
-                                                ));
-                                            }
-                                            if record.status == DownloadStatus::Failed
-                                                && ui.add(t.subtle_button("Retry")).clicked()
-                                            {
-                                                record_action = Some((
-                                                    record.id.clone(),
-                                                    RecordAction::Retry,
-                                                ));
-                                            }
-                                            if ui
-                                                .add(t.subtle_button("↓"))
-                                                .on_hover_text("Move down the queue")
-                                                .clicked()
-                                            {
-                                                move_action = Some((record.id.clone(), 1));
-                                            }
-                                            if ui
-                                                .add(t.subtle_button("↑"))
-                                                .on_hover_text("Move up the queue")
-                                                .clicked()
-                                            {
-                                                move_action = Some((record.id.clone(), -1));
-                                            }
-                                        });
+                                        ui.with_layout(
+                                            Layout::right_to_left(Align::Center),
+                                            |ui| {
+                                                if ui.add(t.subtle_button("Delete")).clicked() {
+                                                    record_action = Some((
+                                                        record.id.clone(),
+                                                        RecordAction::Delete,
+                                                    ));
+                                                }
+                                                if record.status == DownloadStatus::Failed
+                                                    && ui.add(t.subtle_button("Retry")).clicked()
+                                                {
+                                                    record_action = Some((
+                                                        record.id.clone(),
+                                                        RecordAction::Retry,
+                                                    ));
+                                                }
+                                                if ui
+                                                    .add(t.subtle_button("↓"))
+                                                    .on_hover_text("Move down the queue")
+                                                    .clicked()
+                                                {
+                                                    move_action = Some((record.id.clone(), 1));
+                                                }
+                                                if ui
+                                                    .add(t.subtle_button("↑"))
+                                                    .on_hover_text("Move up the queue")
+                                                    .clicked()
+                                                {
+                                                    move_action = Some((record.id.clone(), -1));
+                                                }
+                                            },
+                                        );
                                     });
                                 });
                                 ui.add_space(theme::gap());
@@ -1623,192 +1731,235 @@ impl DownloadManagerApp {
 
     fn settings_general(&mut self, ui: &mut Ui, t: &theme::Tokens) -> bool {
         let mut changed = false;
-        settings_section(ui, t, "General", "Startup behavior and the catalog source.", |ui| {
-            let mut start = self.settings.general.start_with_windows;
-            if ui.checkbox(&mut start, "Start Pulse with Windows").changed() {
-                match system::set_start_with_windows(start) {
-                    Ok(()) => {
-                        self.settings.general.start_with_windows = start;
-                        changed = true;
+        settings_section(
+            ui,
+            t,
+            "General",
+            "Startup behavior and the catalog source.",
+            |ui| {
+                let mut start = self.settings.general.start_with_windows;
+                if ui
+                    .checkbox(&mut start, "Start Pulse with Windows")
+                    .changed()
+                {
+                    match system::set_start_with_windows(start) {
+                        Ok(()) => {
+                            self.settings.general.start_with_windows = start;
+                            changed = true;
+                        }
+                        Err(error) => self.notifications.push(
+                            "Startup setting unavailable",
+                            error.to_string(),
+                            NotificationKind::Warning,
+                        ),
                     }
-                    Err(error) => self.notifications.push(
-                        "Startup setting unavailable",
-                        error.to_string(),
-                        NotificationKind::Warning,
-                    ),
                 }
-            }
-            changed |= ui
-                .checkbox(
-                    &mut self.settings.general.minimize_to_tray,
-                    "Keep Pulse in the system tray when the window closes",
-                )
-                .changed();
-            changed |= ui
-                .checkbox(
-                    &mut self.settings.general.confirm_before_deleting,
-                    "Ask before removing a download entry",
-                )
-                .changed();
-            ui.add_space(10.0);
-            settings_label(ui, t, "Language");
-            let language = egui::ComboBox::from_id_salt("language")
-                .selected_text(&self.settings.general.language)
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut self.settings.general.language,
-                        "English".to_owned(),
-                        "English",
+                changed |= ui
+                    .checkbox(
+                        &mut self.settings.general.minimize_to_tray,
+                        "Keep Pulse in the system tray when the window closes",
                     )
-                });
-            changed |= language
-                .inner
-                .map(|response| response.changed())
-                .unwrap_or(false);
-            ui.add_space(10.0);
-            settings_label(ui, t, "Apps catalog endpoint");
-            changed |= ui.text_edit_singleline(&mut self.settings.apps_api_url).changed();
-            ui.label(t.faint_text(
-                "A GET endpoint returning an array or { \"apps\": [ … ] } of catalog items.",
-            ));
-        });
+                    .changed();
+                changed |= ui
+                    .checkbox(
+                        &mut self.settings.general.confirm_before_deleting,
+                        "Ask before removing a download entry",
+                    )
+                    .changed();
+                ui.add_space(10.0);
+                settings_label(ui, t, "Language");
+                let language = egui::ComboBox::from_id_salt("language")
+                    .selected_text(&self.settings.general.language)
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(
+                            &mut self.settings.general.language,
+                            "English".to_owned(),
+                            "English",
+                        )
+                    });
+                changed |= language
+                    .inner
+                    .map(|response| response.changed())
+                    .unwrap_or(false);
+                ui.add_space(10.0);
+                settings_label(ui, t, "Apps catalog endpoint");
+                changed |= ui
+                    .text_edit_singleline(&mut self.settings.apps_api_url)
+                    .changed();
+                ui.label(t.faint_text(
+                    "A GET endpoint returning an array or { \"apps\": [ … ] } of catalog items.",
+                ));
+            },
+        );
         changed
     }
 
     fn settings_downloads(&mut self, ui: &mut Ui, t: &theme::Tokens) -> bool {
         let mut changed = false;
-        settings_section(ui, t, "Downloads", "Storage, concurrency and automatic starting.", |ui| {
-            settings_label(ui, t, "Default folder");
-            ui.horizontal(|ui| {
-                let field_width = (ui.available_width() - 104.0).max(140.0);
-                let field = egui::TextEdit::singleline(
-                    &mut self.settings.downloads.default_download_folder,
-                );
-                changed |= ui.add_sized([field_width, 30.0], field).changed();
-                if ui.add(t.subtle_button("Choose…")).clicked() {
-                    let current = self.settings.default_folder_path();
-                    let picked = rfd::FileDialog::new().set_directory(current).pick_folder();
-                    if let Some(folder) = picked {
-                        self.settings.set_download_folder(folder);
-                        changed = true;
+        settings_section(
+            ui,
+            t,
+            "Downloads",
+            "Storage, concurrency and automatic starting.",
+            |ui| {
+                settings_label(ui, t, "Default folder");
+                ui.horizontal(|ui| {
+                    let field_width = (ui.available_width() - 104.0).max(140.0);
+                    let field = egui::TextEdit::singleline(
+                        &mut self.settings.downloads.default_download_folder,
+                    );
+                    changed |= ui.add_sized([field_width, 30.0], field).changed();
+                    if ui.add(t.subtle_button("Choose…")).clicked() {
+                        let current = self.settings.default_folder_path();
+                        let picked = rfd::FileDialog::new().set_directory(current).pick_folder();
+                        if let Some(folder) = picked {
+                            self.settings.set_download_folder(folder);
+                            changed = true;
+                        }
                     }
-                }
-            });
-            ui.add_space(10.0);
-            changed |= ui
-                .checkbox(
-                    &mut self.settings.downloads.auto_start_downloads,
-                    "Start downloads as soon as they are added",
-                )
-                .changed();
-            ui.add_space(6.0);
-            changed |= ui
-                .add(egui::Slider::new(
-                    &mut self.settings.downloads.maximum_simultaneous_downloads,
-                    1..=16,
-                ).text("Simultaneous downloads"))
-                .changed();
-            changed |= ui
-                .add(egui::Slider::new(
-                    &mut self.settings.downloads.maximum_connections_per_download,
-                    1..=16,
-                ).text("Connections per download"))
-                .changed();
-            changed |= ui
-                .add(
-                    egui::DragValue::new(&mut self.settings.downloads.download_speed_limit_kbps)
+                });
+                ui.add_space(10.0);
+                changed |= ui
+                    .checkbox(
+                        &mut self.settings.downloads.auto_start_downloads,
+                        "Start downloads as soon as they are added",
+                    )
+                    .changed();
+                ui.add_space(6.0);
+                changed |= ui
+                    .add(
+                        egui::Slider::new(
+                            &mut self.settings.downloads.maximum_simultaneous_downloads,
+                            1..=16,
+                        )
+                        .text("Simultaneous downloads"),
+                    )
+                    .changed();
+                changed |= ui
+                    .add(
+                        egui::Slider::new(
+                            &mut self.settings.downloads.maximum_connections_per_download,
+                            1..=16,
+                        )
+                        .text("Connections per download"),
+                    )
+                    .changed();
+                changed |= ui
+                    .add(
+                        egui::DragValue::new(
+                            &mut self.settings.downloads.download_speed_limit_kbps,
+                        )
                         .speed(64.0)
                         .suffix(" KB/s (0 = unlimited)"),
-                )
-                .changed();
-        });
+                    )
+                    .changed();
+            },
+        );
         changed
     }
 
     fn settings_network(&mut self, ui: &mut Ui, t: &theme::Tokens) -> bool {
         let mut changed = false;
-        settings_section(ui, t, "Network", "Timeouts, retries, proxy and request headers.", |ui| {
-            changed |= ui
-                .add(egui::Slider::new(
-                    &mut self.settings.network.connection_timeout_seconds,
-                    5..=600,
-                ).text("Connection timeout (seconds)"))
-                .changed();
-            changed |= ui
-                .add(
-                    egui::Slider::new(&mut self.settings.network.retry_count, 0..=20)
-                        .text("Automatic retries"),
-                )
-                .changed();
-            ui.add_space(10.0);
-            settings_label(ui, t, "Proxy");
-            changed |= ui
-                .text_edit_singleline(&mut self.settings.network.proxy)
-                .on_hover_text("Example: http://user:password@proxy.example:8080")
-                .changed();
-            ui.label(t.faint_text("Leave empty to use the system network defaults."));
-            ui.add_space(10.0);
-            settings_label(ui, t, "User-Agent");
-            changed |= ui
-                .text_edit_singleline(&mut self.settings.network.user_agent)
-                .changed();
-            ui.add_space(10.0);
-            settings_label(ui, t, "Additional headers");
-            changed |= ui
-                .add(
-                    egui::TextEdit::multiline(&mut self.settings.network.additional_headers)
-                        .desired_rows(3)
-                        .hint_text("One header per line: X-Token: value"),
-                )
-                .changed();
-        });
+        settings_section(
+            ui,
+            t,
+            "Network",
+            "Timeouts, retries, proxy and request headers.",
+            |ui| {
+                changed |= ui
+                    .add(
+                        egui::Slider::new(
+                            &mut self.settings.network.connection_timeout_seconds,
+                            5..=600,
+                        )
+                        .text("Connection timeout (seconds)"),
+                    )
+                    .changed();
+                changed |= ui
+                    .add(
+                        egui::Slider::new(&mut self.settings.network.retry_count, 0..=20)
+                            .text("Automatic retries"),
+                    )
+                    .changed();
+                ui.add_space(10.0);
+                settings_label(ui, t, "Proxy");
+                changed |= ui
+                    .text_edit_singleline(&mut self.settings.network.proxy)
+                    .on_hover_text("Example: http://user:password@proxy.example:8080")
+                    .changed();
+                ui.label(t.faint_text("Leave empty to use the system network defaults."));
+                ui.add_space(10.0);
+                settings_label(ui, t, "User-Agent");
+                changed |= ui
+                    .text_edit_singleline(&mut self.settings.network.user_agent)
+                    .changed();
+                ui.add_space(10.0);
+                settings_label(ui, t, "Additional headers");
+                changed |= ui
+                    .add(
+                        egui::TextEdit::multiline(&mut self.settings.network.additional_headers)
+                            .desired_rows(3)
+                            .hint_text("One header per line: X-Token: value"),
+                    )
+                    .changed();
+            },
+        );
         changed
     }
 
     fn settings_appearance(&mut self, ui: &mut Ui, ctx: &egui::Context, t: &theme::Tokens) -> bool {
         let mut changed = false;
-        settings_section(ui, t, "Appearance", "Theme, accent color and interface scale.", |ui| {
-            if ui
-                .checkbox(&mut self.settings.appearance.dark_mode, "Dark theme (recommended)")
-                .changed()
-            {
-                self.apply_appearance(ctx);
-                changed = true;
-            }
-            ui.add_space(8.0);
-            settings_label(ui, t, "Accent color");
-            ui.horizontal(|ui| {
-                let mut color = self.accent;
-                if ui.color_edit_button_srgba(&mut color).changed() {
-                    self.accent = color;
-                    self.settings.appearance.accent_color =
-                        format!("#{:02X}{:02X}{:02X}", color.r(), color.g(), color.b());
-                    self.apply_appearance(ctx);
-                    changed = true;
-                }
+        settings_section(
+            ui,
+            t,
+            "Appearance",
+            "Theme, accent color and interface scale.",
+            |ui| {
                 if ui
-                    .add_sized(
-                        [110.0, 28.0],
-                        egui::TextEdit::singleline(&mut self.settings.appearance.accent_color),
+                    .checkbox(
+                        &mut self.settings.appearance.dark_mode,
+                        "Dark theme (recommended)",
                     )
                     .changed()
                 {
                     self.apply_appearance(ctx);
                     changed = true;
                 }
-                ui.label(t.faint_text("Hex value, for example #7C6CFF"));
-            });
-            ui.add_space(10.0);
-            changed |= ui
-                .add(
-                    egui::Slider::new(&mut self.settings.appearance.ui_scale, 0.8..=1.5)
-                        .text("Interface scale"),
-                )
-                .changed();
-            if changed {
-                self.apply_appearance(ctx);
-            }
-        });
+                ui.add_space(8.0);
+                settings_label(ui, t, "Accent color");
+                ui.horizontal(|ui| {
+                    let mut color = self.accent;
+                    if ui.color_edit_button_srgba(&mut color).changed() {
+                        self.accent = color;
+                        self.settings.appearance.accent_color =
+                            format!("#{:02X}{:02X}{:02X}", color.r(), color.g(), color.b());
+                        self.apply_appearance(ctx);
+                        changed = true;
+                    }
+                    if ui
+                        .add_sized(
+                            [110.0, 28.0],
+                            egui::TextEdit::singleline(&mut self.settings.appearance.accent_color),
+                        )
+                        .changed()
+                    {
+                        self.apply_appearance(ctx);
+                        changed = true;
+                    }
+                    ui.label(t.faint_text("Hex value, for example #7C6CFF"));
+                });
+                ui.add_space(10.0);
+                changed |= ui
+                    .add(
+                        egui::Slider::new(&mut self.settings.appearance.ui_scale, 0.8..=1.5)
+                            .text("Interface scale"),
+                    )
+                    .changed();
+                if changed {
+                    self.apply_appearance(ctx);
+                }
+            },
+        );
         changed
     }
 
@@ -2102,7 +2253,8 @@ fn fill_width(ui: &mut Ui) {
 /// Circular brand mark used in the sidebar and the icon rail.
 fn brand_mark(ui: &mut Ui, accent: Color32, size: f32) {
     let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), egui::Sense::hover());
-    ui.painter().circle_filled(rect.center(), size / 2.0, accent);
+    ui.painter()
+        .circle_filled(rect.center(), size / 2.0, accent);
     ui.painter().circle_stroke(
         rect.center(),
         size / 2.0 - 1.0,
@@ -2160,8 +2312,11 @@ fn file_badge(ui: &mut Ui, record: &DownloadRecord) {
     let extension = extension.chars().take(4).collect::<String>();
     let color = theme::file_color(&extension);
     let (rect, _) = ui.allocate_exact_size(Vec2::new(46.0, 50.0), egui::Sense::hover());
-    ui.painter()
-        .rect_filled(rect, Rounding::same(theme::RADIUS_MD), theme::tint(color, 46));
+    ui.painter().rect_filled(
+        rect,
+        Rounding::same(theme::RADIUS_MD),
+        theme::tint(color, 46),
+    );
     ui.painter().rect_stroke(
         rect,
         Rounding::same(theme::RADIUS_MD),
@@ -2354,7 +2509,10 @@ fn truncate(value: &str, max_chars: usize) -> String {
     if value.chars().count() <= max_chars {
         return value.to_owned();
     }
-    let mut result = value.chars().take(max_chars.saturating_sub(1)).collect::<String>();
+    let mut result = value
+        .chars()
+        .take(max_chars.saturating_sub(1))
+        .collect::<String>();
     result.push('…');
     result
 }

@@ -13,7 +13,8 @@ pub fn set_start_with_windows(enabled: bool) -> Result<()> {
         )?;
         let value_name = "PulseDownloadManager";
         if enabled {
-            let executable = std::env::current_exe().context("cannot locate the application executable")?;
+            let executable =
+                std::env::current_exe().context("cannot locate the application executable")?;
             let command = format!("\"{}\"", executable.display());
             key.set_value(value_name, &command)?;
         } else {
