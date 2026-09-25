@@ -41,16 +41,6 @@ pub fn format_eta(seconds: Option<u64>) -> String {
     }
 }
 
-pub fn format_duration(seconds: u64) -> String {
-    if seconds < 60 {
-        format!("{seconds}s")
-    } else if seconds < 3600 {
-        format!("{}m {:02}s", seconds / 60, seconds % 60)
-    } else {
-        format!("{}h {:02}m", seconds / 3600, (seconds % 3600) / 60)
-    }
-}
-
 pub fn safe_file_name(input: &str) -> String {
     let candidate = Path::new(input)
         .file_name()
@@ -96,7 +86,7 @@ pub fn guess_file_name(raw_url: &str) -> String {
         .and_then(|parsed| {
             parsed
                 .path_segments()
-                .and_then(|segments| segments.filter(|part| !part.is_empty()).next_back())
+                .and_then(|mut segments| segments.rfind(|part| !part.is_empty()))
                 .map(safe_file_name)
         })
         .filter(|name| !name.is_empty() && name != ".")

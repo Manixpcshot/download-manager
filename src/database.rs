@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
-use rusqlite::{params, Connection, OptionalExtension};
-use std::path::{Path, PathBuf};
+use rusqlite::{params, Connection};
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use crate::models::{DownloadRecord, DownloadStatus};
@@ -9,7 +9,6 @@ pub type SharedDatabase = Arc<Mutex<Database>>;
 
 pub struct Database {
     connection: Connection,
-    path: PathBuf,
 }
 
 impl Database {
@@ -24,13 +23,9 @@ impl Database {
             .with_context(|| format!("cannot open database {}", path.display()))?;
         connection.pragma_update(None, "journal_mode", "WAL")?;
         connection.pragma_update(None, "foreign_keys", "ON")?;
-        let database = Self { connection, path };
+        let database = Self { connection };
         database.migrate()?;
         Ok(database)
-    }
-
-    pub fn path(&self) -> &Path {
-        &self.path
     }
 
     fn migrate(&self) -> Result<()> {
@@ -93,39 +88,6 @@ impl Database {
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
         Ok(records)
-    }
-
-    pub fn find(&self, id: &str) -> Result<Option<DownloadRecord>> {
-        self.connection
-            .query_row(
-                "SELECT id, url, file_name, total_bytes, downloaded_bytes, status,
-                        save_path, created_at, completed_at, speed_bps, eta_seconds,
-                        error, priority, connections, expected_sha256, content_type
-                 FROM downloads WHERE id = ?1",
-                [id],
-                |row| {
-                    Ok(DownloadRecord {
-                        id: row.get(0)?,
-                        url: row.get(1)?,
-                        file_name: row.get(2)?,
-                        total_bytes: row.get(3)?,
-                        downloaded_bytes: row.get(4)?,
-                        status: DownloadStatus::from_db_value(row.get::<_, String>(5)?.as_str()),
-                        save_path: row.get(6)?,
-                        created_at: row.get(7)?,
-                        completed_at: row.get(8)?,
-                        speed_bps: row.get(9)?,
-                        eta_seconds: row.get(10)?,
-                        error: row.get(11)?,
-                        priority: row.get(12)?,
-                        connections: row.get(13)?,
-                        expected_sha256: row.get(14)?,
-                        content_type: row.get(15)?,
-                    })
-                },
-            )
-            .optional()
-            .map_err(Into::into)
     }
 
     pub fn insert(&self, record: &DownloadRecord) -> Result<()> {
@@ -223,9 +185,4 @@ impl Database {
         Ok(())
     }
 
-    pub fn set_priority(&self, id: &str, priority: i32) -> Result<()> {
-        self.connection
-            .execute("UPDATE downloads SET priority = ?2 WHERE id = ?1", params![id, priority])?;
-        Ok(())
-    }
 }

@@ -107,10 +107,7 @@ pub struct DownloadManagerApp {
 
 impl DownloadManagerApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Result<Self> {
-        let mut settings = match Settings::load() {
-            Ok(settings) => settings,
-            Err(_) => Settings::default(),
-        };
+        let mut settings = Settings::load().unwrap_or_default();
         settings.ensure_valid();
         let database = Arc::new(Mutex::new(Database::open(Settings::database_path())?));
         let mut records = database
@@ -625,7 +622,7 @@ impl DownloadManagerApp {
             .cloned()
             .collect::<Vec<_>>();
         match self.sort {
-            SortKey::Recent => records.sort_by(|left, right| right.created_at.cmp(&left.created_at)),
+            SortKey::Recent => records.sort_by_key(|record| std::cmp::Reverse(record.created_at)),
             SortKey::Name => records.sort_by(|left, right| left.file_name.to_lowercase().cmp(&right.file_name.to_lowercase())),
             SortKey::Size => records.sort_by(|left, right| right.total_bytes.unwrap_or(0).cmp(&left.total_bytes.unwrap_or(0))),
             SortKey::Status => records.sort_by(|left, right| left.status.label().cmp(right.status.label())),

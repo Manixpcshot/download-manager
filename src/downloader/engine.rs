@@ -827,6 +827,7 @@ enum SegmentOutcome {
     Cancelled,
 }
 
+#[allow(clippy::too_many_arguments)]
 fn download_segment(
     client: Client,
     url: &str,
