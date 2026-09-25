@@ -52,7 +52,31 @@ jobs:
               body
             });
       - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        shell: pwsh
+        run: |
+          cargo clippy --all-targets --all-features -- -D warnings 2>&1 | Tee-Object clippy.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Publish clippy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clippy-log
+          path: clippy.log
+      - name: Report clippy failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.existsSync('clippy.log') ? fs.readFileSync('clippy.log', 'utf8') : 'clippy.log was not created';
+            const fence = '`'.repeat(3);
+            const body = 'Clippy output for ' + context.sha + ':\n\n' + fence + 'text\n' + log.slice(-50000) + '\n' + fence;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number || 1,
+              body
+            });
       - name: Tests
         run: cargo test --all-targets
       - name: Release build
