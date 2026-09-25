@@ -2332,7 +2332,7 @@ fn sort_label(sort: SortKey) -> &'static str {
 fn responsive_columns(width: f32, max_width: f32, max_columns: usize) -> usize {
     let target = width.min(max_width);
     let mut columns = max_columns.max(1);
-    while columns > 1 && target / columns as f32 < 320.0 {
+    while columns > 1 && target / (columns as f32) < 320.0 {
         columns -= 1;
     }
     columns
