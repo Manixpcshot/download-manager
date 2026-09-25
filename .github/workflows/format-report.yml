@@ -1,10 +1,14 @@
 name: Format report
 
-# Temporary helper workflow: it runs rustfmt on a Linux runner, prints the resulting diff and
-# pushes the formatted sources back to the same branch. It exists only so the redesign branch can
-# be normalized without a local toolchain; it is removed again in a follow-up commit.
+# Temporary helper workflow. It runs rustfmt on a Linux runner, prints the resulting diff and
+# pushes the formatted sources back to this branch so the redesign can be normalized without a
+# local toolchain. It is triggered only by touching the marker file below and is deleted again in
+# a follow-up commit.
 
 on:
+  push:
+    branches: ["arena/01a0da99-download-manager"]
+    paths: [".github/format-report-trigger.txt"]
   workflow_dispatch:
 
 permissions:
