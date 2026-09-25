@@ -27,7 +27,9 @@ fn main() -> eframe::Result<()> {
         Box::new(|creation_context| {
             app::DownloadManagerApp::new(creation_context)
                 .map(|application| Box::new(application) as Box<dyn eframe::App>)
-                .map_err(|error| -> Box<dyn std::error::Error + Send + Sync> { Box::new(error) })
+                .map_err(|error| -> Box<dyn std::error::Error + Send + Sync> {
+                    Box::new(std::io::Error::new(std::io::ErrorKind::Other, error.to_string()))
+                })
         }),
     )
 }

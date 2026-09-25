@@ -624,7 +624,7 @@ fn run_download(
     };
     let segments = make_segments(remote.total_bytes, segment_count);
     let total_downloaded = Arc::new(AtomicU64::new(0));
-    for (index, segment) in segments.iter().enumerate() {
+    for (index, _segment) in segments.iter().enumerate() {
         let path = partial_dir.join(format!("{index:04}.part"));
         if let Ok(length) = fs::metadata(path).map(|metadata| metadata.len()) {
             total_downloaded.fetch_add(length, Ordering::AcqRel);

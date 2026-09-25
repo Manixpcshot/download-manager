@@ -1,4 +1,4 @@
-use egui::{Color32, Context, Rounding, Stroke, Visuals};
+use egui::{self, Color32, Context, Rounding, Stroke, Visuals};
 
 pub const BG: Color32 = Color32::from_rgb(9, 13, 22);
 pub const SIDEBAR: Color32 = Color32::from_rgb(14, 19, 31);
@@ -32,7 +32,7 @@ pub fn apply(context: &Context, accent: Color32, dark_mode: bool) {
     visuals.faint_bg_color = if dark_mode { PANEL } else { Color32::from_rgb(235, 240, 247) };
     visuals.extreme_bg_color = if dark_mode { SIDEBAR } else { Color32::from_rgb(225, 231, 241) };
     visuals.selection.bg_fill = accent.linear_multiply(0.28);
-    visuals.selection.stroke = Stroke::new(1.0, accent);
+    visuals.selection.stroke = Stroke::new(1.0_f32, accent);
     visuals.widgets.noninteractive.bg_fill = visuals.panel_fill;
     visuals.widgets.noninteractive.fg_stroke.color = visuals.override_text_color.unwrap_or(TEXT);
     visuals.widgets.inactive.bg_fill = if dark_mode { PANEL } else { Color32::WHITE };
@@ -48,9 +48,9 @@ pub fn apply(context: &Context, accent: Color32, dark_mode: bool) {
         style.spacing.item_spacing = egui::vec2(8.0, 8.0);
         style.spacing.button_padding = egui::vec2(12.0, 8.0);
         style.visuals.window_shadow = egui::Shadow {
-            offset: [0, 12],
-            blur: 32,
-            spread: 0,
+            offset: egui::vec2(0.0, 12.0),
+            blur: 32.0,
+            spread: 0.0,
             color: Color32::from_black_alpha(80),
         };
     });
@@ -71,7 +71,7 @@ pub fn status_color(status: crate::models::DownloadStatus) -> Color32 {
 pub fn card_frame() -> egui::Frame {
     egui::Frame::none()
         .fill(PANEL)
-        .stroke(Stroke::new(1.0, BORDER))
+        .stroke(Stroke::new(1.0_f32, BORDER))
         .rounding(Rounding::same(14.0))
         .inner_margin(egui::Margin::same(16.0))
 }

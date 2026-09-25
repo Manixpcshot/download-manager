@@ -342,23 +342,25 @@ impl DownloadManagerApp {
     }
 
     fn handle_drop_files(&mut self, ctx: &egui::Context) {
-        let dropped = ctx.input(|input| {
+        let dropped: Vec<String> = ctx.input(|input| {
             input
                 .raw
                 .dropped_files
                 .iter()
                 .filter_map(|file| {
-                    file.text.clone().or_else(|| {
-                        file.path.as_ref().and_then(|path| {
-                            if path.extension().and_then(|ext| ext.to_str()).map(|ext| ext.eq_ignore_ascii_case("url")).unwrap_or(false) {
-                                utils::parse_url_file(path)
-                            } else {
-                                None
-                            }
-                        })
+                    if utils::is_url_like(file.name.trim()) {
+                        return Some(file.name.trim().to_owned());
+                    }
+                    file.path.as_ref().and_then(|path| {
+                        let is_url_shortcut = path
+                            .extension()
+                            .and_then(|extension| extension.to_str())
+                            .map(|extension| extension.eq_ignore_ascii_case("url"))
+                            .unwrap_or(false);
+                        is_url_shortcut.then(|| utils::parse_url_file(path)).flatten()
                     })
                 })
-                .collect::<Vec<_>>()
+                .collect()
         });
         if let Some(url) = dropped.into_iter().find(|value| utils::is_url_like(value)) {
             self.open_add_dialog(Some(url));
@@ -784,7 +786,7 @@ impl DownloadManagerApp {
         ];
         ui.columns(4, |columns| {
             for (column, (label, value, caption, color)) in columns.iter_mut().zip(stats) {
-                Frame::none().fill(theme::PANEL).stroke(Stroke::new(1.0, theme::BORDER)).rounding(Rounding::same(13.0)).inner_margin(Margin::same(14.0)).show(column, |ui| {
+                Frame::none().fill(theme::PANEL).stroke(Stroke::new(1.0_f32, theme::BORDER)).rounding(Rounding::same(13.0)).inner_margin(Margin::same(14.0)).show(column, |ui| {
                     ui.horizontal(|ui| {
                         let (rect, _) = ui.allocate_exact_size(Vec2::splat(8.0), egui::Sense::hover());
                         ui.painter().circle_filled(rect.center(), 4.0, color);
@@ -810,7 +812,7 @@ impl DownloadManagerApp {
                 });
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     let color = theme::status_color(record.status);
-                    let pill = egui::Button::new(RichText::new(format!("●  {}", record.status.label())).small().color(color)).fill(color.linear_multiply(0.15)).stroke(Stroke::new(0.0, Color32::TRANSPARENT));
+                    let pill = egui::Button::new(RichText::new(format!("●  {}", record.status.label())).small().color(color)).fill(color.linear_multiply(0.15)).stroke(Stroke::new(0.0_f32, Color32::TRANSPARENT));
                     ui.add(pill);
                 });
             });
@@ -874,7 +876,7 @@ impl DownloadManagerApp {
         let color = file_color(&extension);
         let (rect, _) = ui.allocate_exact_size(Vec2::new(48.0, 54.0), egui::Sense::hover());
         ui.painter().rect_filled(rect, Rounding::same(11.0), color.linear_multiply(0.2));
-        ui.painter().rect_stroke(rect, Rounding::same(11.0), Stroke::new(1.0, color.linear_multiply(0.6)));
+        ui.painter().rect_stroke(rect, Rounding::same(11.0), Stroke::new(1.0_f32, color.linear_multiply(0.6)));
         ui.painter().text(rect.center(), Align2::CENTER_CENTER, extension, FontId::proportional(12.0), color);
     }
 
@@ -893,7 +895,7 @@ impl DownloadManagerApp {
                     });
                 });
                 ui.add_space(18.0);
-                Frame::none().fill(theme::PANEL).stroke(Stroke::new(1.0, theme::BORDER)).rounding(Rounding::same(13.0)).inner_margin(Margin::same(15.0)).show(ui, |ui| {
+                Frame::none().fill(theme::PANEL).stroke(Stroke::new(1.0_f32, theme::BORDER)).rounding(Rounding::same(13.0)).inner_margin(Margin::same(15.0)).show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.label(RichText::new(if self.queue_running { "Queue is running" } else { "Queue is paused" }).strong().color(if self.queue_running { theme::SUCCESS } else { theme::WARNING }));
                         ui.separator();
@@ -953,7 +955,7 @@ impl DownloadManagerApp {
                 });
                 ui.add_space(18.0);
                 if let Some(error) = &self.apps.error {
-                    Frame::none().fill(theme::DANGER.linear_multiply(0.12)).stroke(Stroke::new(1.0, theme::DANGER.linear_multiply(0.5))).rounding(Rounding::same(12.0)).inner_margin(Margin::same(14.0)).show(ui, |ui| {
+                    Frame::none().fill(theme::DANGER.linear_multiply(0.12)).stroke(Stroke::new(1.0_f32, theme::DANGER.linear_multiply(0.5))).rounding(Rounding::same(12.0)).inner_margin(Margin::same(14.0)).show(ui, |ui| {
                         ui.label(RichText::new("Catalog unavailable").strong().color(theme::DANGER));
                         ui.label(error);
                         ui.label(RichText::new("Check the API endpoint in Settings → General.").small().color(theme::MUTED));
@@ -1143,7 +1145,7 @@ impl DownloadManagerApp {
     where
         F: FnOnce(&mut Ui),
     {
-        Frame::none().fill(theme::PANEL).stroke(Stroke::new(1.0, theme::BORDER)).rounding(Rounding::same(14.0)).inner_margin(Margin::same(18.0)).show(ui, |ui| {
+        Frame::none().fill(theme::PANEL).stroke(Stroke::new(1.0_f32, theme::BORDER)).rounding(Rounding::same(14.0)).inner_margin(Margin::same(18.0)).show(ui, |ui| {
             ui.label(RichText::new(title).size(16.0).strong());
             ui.label(RichText::new(subtitle).small().color(theme::MUTED));
             ui.add_space(14.0);
@@ -1170,7 +1172,7 @@ impl DownloadManagerApp {
         }
         let notification_items = self.notifications.items.iter().take(7).cloned().collect::<Vec<_>>();
         egui::Area::new("notification-area".into()).anchor(Align2::RIGHT_TOP, egui::vec2(-18.0, 68.0)).order(egui::Order::Foreground).show(ctx, |ui| {
-            Frame::none().fill(theme::PANEL).stroke(Stroke::new(1.0, theme::BORDER)).rounding(Rounding::same(12.0)).inner_margin(Margin::same(14.0)).show(ui, |ui| {
+            Frame::none().fill(theme::PANEL).stroke(Stroke::new(1.0_f32, theme::BORDER)).rounding(Rounding::same(12.0)).inner_margin(Margin::same(14.0)).show(ui, |ui| {
                 ui.horizontal(|ui| {
                     ui.label(RichText::new("Notifications").strong());
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| { if ui.small_button("Clear").clicked() { self.notifications.clear(); } });
@@ -1290,7 +1292,7 @@ impl DownloadManagerApp {
                 });
                 ui.horizontal(|ui| {
                     ui.label(RichText::new("SHA-256").color(theme::MUTED));
-                    ui.text_edit_singleline(&mut dialog.checksum).hint_text("Optional integrity check");
+                    ui.add(egui::TextEdit::singleline(&mut dialog.checksum).hint_text("Optional integrity check"));
                 });
                 if let Some(error) = &dialog.error { ui.add_space(6.0); ui.label(RichText::new(error).color(theme::DANGER)); }
             }
@@ -1337,7 +1339,7 @@ fn render_app_card(ui: &mut Ui, item: &AppItem, accent: Color32) -> (bool, bool)
 fn app_icon(ui: &mut Ui, name: &str, accent: Color32, size: f32) {
     let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), egui::Sense::hover());
     ui.painter().rect_filled(rect, Rounding::same(12.0), accent.linear_multiply(0.18));
-    ui.painter().rect_stroke(rect, Rounding::same(12.0), Stroke::new(1.0, accent.linear_multiply(0.55)));
+    ui.painter().rect_stroke(rect, Rounding::same(12.0), Stroke::new(1.0_f32, accent.linear_multiply(0.55)));
     let initial = name.chars().next().unwrap_or('A').to_ascii_uppercase().to_string();
     ui.painter().text(rect.center(), Align2::CENTER_CENTER, initial, FontId::proportional(size * 0.42), accent);
 }
