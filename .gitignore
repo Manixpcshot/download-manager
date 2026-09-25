@@ -1,0 +1,10 @@
+/target/
+/.env
+*.db
+*.db-shm
+*.db-wal
+*.part
+*.parts/
+*.pulse-download/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "7zip",
+    "name": "7-Zip",
+    "icon_url": null,
+    "short_description": "Open-source file archiver with strong AES-256 encryption support.",
+    "version": "24.09",
+    "size_bytes": 1605632,
+    "developer": "Igor Pavlov",
+    "updated_at": "2025-01-05",
+    "category": "Utilities",
+    "download_url": "https://www.7-zip.org/a/7z2409-x64.exe",
+    "details_url": "https://www.7-zip.org/",
+    "sha256": null
+  },
+  {
+    "id": "vscode",
+    "name": "Visual Studio Code",
+    "icon_url": null,
+    "short_description": "A focused code editor with extensions, Git integration and debugging.",
+    "version": "latest",
+    "size_bytes": null,
+    "developer": "Microsoft",
+    "updated_at": "2025-02-01",
+    "category": "Development",
+    "download_url": "https://update.code.visualstudio.com/latest/win32-x64-user/stable",
+    "details_url": "https://code.visualstudio.com/",
+    "sha256": null
+  },
+  {
+    "id": "vlc",
+    "name": "VLC media player",
+    "icon_url": null,
+    "short_description": "A free, open-source media player for nearly every audio and video format.",
+    "version": "3.0.21",
+    "size_bytes": 42000000,
+    "developer": "VideoLAN",
+    "updated_at": "2025-01-10",
+    "category": "Media",
+    "download_url": "https://get.videolan.org/vlc/3.0.21/win64/vlc-3.0.21-win64.exe",
+    "details_url": "https://www.videolan.org/vlc/",
+    "sha256": null
+  }
+]
