@@ -24,7 +24,16 @@ jobs:
       - name: Format
         run: cargo fmt --all || echo "rustfmt reported issues; compiler checks below remain authoritative"
       - name: Check
-        run: cargo check --all-targets
+        shell: pwsh
+        run: |
+          cargo check --all-targets 2>&1 | Tee-Object check.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Publish compiler log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiler-log
+          path: check.log
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Tests
