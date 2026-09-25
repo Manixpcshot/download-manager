@@ -1,0 +1,61 @@
+[package]
+name = "pulse-download-manager"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+authors = ["Manixpcshot"]
+description = "A native, modular Windows download manager built with Rust"
+license = "MIT"
+repository = "https://github.com/Manixpcshot/download-manager"
+readme = "README.md"
+keywords = ["download-manager", "windows", "rust", "desktop"]
+categories = ["command-line-utilities", "network-programming"]
+build = "build.rs"
+
+[dependencies]
+anyhow = "1.0"
+arboard = "3.4"
+chrono = { version = "0.4", features = ["serde", "clock"] }
+dirs = "5.0"
+eframe = { version = "0.29", default-features = false, features = ["accesskit", "default_fonts", "glow", "x11"] }
+egui = "0.29"
+open = "5.3"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "cookies", "gzip", "brotli", "deflate", "json", "rustls-tls"] }
+rfd = "0.15"
+rusqlite = { version = "0.32", features = ["bundled"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+thiserror = "1.0"
+tray-icon = "0.19"
+url = "2.5"
+uuid = { version = "1.10", features = ["v4", "serde"] }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+
+[build-dependencies]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+strip = true
+panic = "abort"
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[package.metadata.bundle]
+name = "Pulse Download Manager"
+identifier = "com.manixpcshot.pulse-download-manager"
+icon = []
+short_description = "A native Windows download manager"
+long_description = "A modern native Rust download manager with segmented HTTP downloads and an app catalog."
+
+[package.metadata.winres]
+FileDescription = "Pulse Download Manager"
+ProductName = "Pulse Download Manager"
+OriginalFilename = "pulse-download-manager.exe"
+CompanyName = "Manixpcshot"
+LegalCopyright = "Copyright (c) Manixpcshot"
