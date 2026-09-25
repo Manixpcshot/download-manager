@@ -152,7 +152,7 @@ impl Tokens {
     pub fn card(&self) -> Frame {
         Frame::none()
             .fill(self.panel)
-            .stroke(Stroke::new(1.0, self.border))
+            .stroke(Stroke::new(1.0_f32, self.border))
             .rounding(Rounding::same(RADIUS_LG))
             .inner_margin(Margin::symmetric(16.0, 14.0))
     }
@@ -161,35 +161,35 @@ impl Tokens {
     pub fn inset_frame(&self) -> Frame {
         Frame::none()
             .fill(self.inset)
-            .stroke(Stroke::new(1.0, self.border))
+            .stroke(Stroke::new(1.0_f32, self.border))
             .rounding(Rounding::same(RADIUS_MD))
             .inner_margin(Margin::symmetric(14.0, 12.0))
     }
 
     /// Filled primary action button using the current accent color.
-    pub fn primary_button(&self, text: impl Into<String>) -> Button {
+    pub fn primary_button(&self, text: impl Into<String>) -> Button<'_> {
         Button::new(RichText::new(text.into()).strong().color(Color32::WHITE))
             .fill(self.accent)
-            .stroke(Stroke::new(1.0, self.accent))
+            .stroke(Stroke::new(1.0_f32, self.accent))
             .rounding(Rounding::same(RADIUS_SM))
             .min_size(egui::vec2(0.0, 30.0))
     }
 
     /// Neutral secondary button for the surrounding chrome.
-    pub fn subtle_button(&self, text: impl Into<String>) -> Button {
+    pub fn subtle_button(&self, text: impl Into<String>) -> Button<'_> {
         Button::new(RichText::new(text.into()).color(self.text))
             .fill(self.panel_alt)
-            .stroke(Stroke::new(1.0, self.border))
+            .stroke(Stroke::new(1.0_f32, self.border))
             .rounding(Rounding::same(RADIUS_SM))
             .min_size(egui::vec2(0.0, 30.0))
     }
 
     /// Rounded status pill tinted with the semantic color.
-    pub fn pill(&self, text: impl Into<egui::WidgetText>, color: Color32) -> Button {
+    pub fn pill(&self, text: impl Into<egui::WidgetText>, color: Color32) -> Button<'_> {
         Button::new(text.into())
             .fill(tint(color, if self.dark { 34 } else { 26 }))
             .stroke(Stroke::new(
-                1.0,
+                1.0_f32,
                 tint(color, if self.dark { 96 } else { 80 }),
             ))
             .rounding(Rounding::same(999.0))
@@ -281,7 +281,7 @@ pub fn apply(context: &Context, accent: Color32, dark: bool) {
     visuals.override_text_color = Some(t.text);
     visuals.panel_fill = t.bg;
     visuals.window_fill = t.panel;
-    visuals.window_stroke = Stroke::new(1.0, t.border_strong);
+    visuals.window_stroke = Stroke::new(1.0_f32, t.border_strong);
     visuals.window_rounding = Rounding::same(RADIUS_LG);
     visuals.window_shadow = surface_shadow(dark);
     visuals.popup_shadow = surface_shadow(dark);
@@ -293,40 +293,40 @@ pub fn apply(context: &Context, accent: Color32, dark: bool) {
     visuals.warn_fg_color = t.warning;
     visuals.error_fg_color = t.danger;
     visuals.selection.bg_fill = tint(accent, if dark { 70 } else { 52 });
-    visuals.selection.stroke = Stroke::new(1.0, accent);
+    visuals.selection.stroke = Stroke::new(1.0_f32, accent);
 
     visuals.widgets.noninteractive.bg_fill = t.panel;
     visuals.widgets.noninteractive.weak_bg_fill = t.panel;
-    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0, t.border);
-    visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0, t.muted);
+    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0_f32, t.border);
+    visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0_f32, t.muted);
     visuals.widgets.noninteractive.rounding = Rounding::same(RADIUS_MD);
     visuals.widgets.noninteractive.expansion = 0.0;
 
     visuals.widgets.inactive.bg_fill = t.panel_alt;
     visuals.widgets.inactive.weak_bg_fill = t.panel_alt;
-    visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, t.border);
-    visuals.widgets.inactive.fg_stroke = Stroke::new(1.0, t.text);
+    visuals.widgets.inactive.bg_stroke = Stroke::new(1.0_f32, t.border);
+    visuals.widgets.inactive.fg_stroke = Stroke::new(1.0_f32, t.text);
     visuals.widgets.inactive.rounding = Rounding::same(RADIUS_SM);
     visuals.widgets.inactive.expansion = 0.0;
 
     visuals.widgets.hovered.bg_fill = if dark { t.panel } else { t.panel_alt };
     visuals.widgets.hovered.weak_bg_fill = t.panel_alt;
-    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, tint(accent, 140));
-    visuals.widgets.hovered.fg_stroke = Stroke::new(1.0, t.text);
+    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0_f32, tint(accent, 140));
+    visuals.widgets.hovered.fg_stroke = Stroke::new(1.0_f32, t.text);
     visuals.widgets.hovered.rounding = Rounding::same(RADIUS_SM);
     visuals.widgets.hovered.expansion = 0.0;
 
     visuals.widgets.active.bg_fill = tint(accent, if dark { 90 } else { 70 });
     visuals.widgets.active.weak_bg_fill = tint(accent, if dark { 90 } else { 70 });
-    visuals.widgets.active.bg_stroke = Stroke::new(1.0, accent);
-    visuals.widgets.active.fg_stroke = Stroke::new(1.0, t.text);
+    visuals.widgets.active.bg_stroke = Stroke::new(1.0_f32, accent);
+    visuals.widgets.active.fg_stroke = Stroke::new(1.0_f32, t.text);
     visuals.widgets.active.rounding = Rounding::same(RADIUS_SM);
     visuals.widgets.active.expansion = 0.0;
 
     visuals.widgets.open.bg_fill = t.panel_alt;
     visuals.widgets.open.weak_bg_fill = t.panel_alt;
-    visuals.widgets.open.bg_stroke = Stroke::new(1.0, t.border_strong);
-    visuals.widgets.open.fg_stroke = Stroke::new(1.0, t.text);
+    visuals.widgets.open.bg_stroke = Stroke::new(1.0_f32, t.border_strong);
+    visuals.widgets.open.fg_stroke = Stroke::new(1.0_f32, t.text);
     visuals.widgets.open.rounding = Rounding::same(RADIUS_SM);
     visuals.widgets.open.expansion = 0.0;
 

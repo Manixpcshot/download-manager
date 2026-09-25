@@ -993,7 +993,7 @@ impl DownloadManagerApp {
                             self.notifications.open = !self.notifications.open;
                         }
                         ui.add_space(6.0);
-                        let search_width = ui.available_width().min(420.0).max(120.0);
+                        let search_width = ui.available_width().clamp(120.0, 420.0);
                         ui.add_sized(
                             [search_width, 32.0],
                             egui::TextEdit::singleline(&mut self.search)
@@ -1278,13 +1278,29 @@ impl DownloadManagerApp {
         action: &mut Option<RecordAction>,
     ) {
         match record.status {
-            DownloadStatus::Downloading | DownloadStatus::Queued => {
+            DownloadStatus::Downloading => {
                 if ui
                     .add(t.primary_button("Pause"))
                     .on_hover_text("Pause this download")
                     .clicked()
                 {
                     *action = Some(RecordAction::Pause);
+                }
+                if ui
+                    .add(t.subtle_button("Cancel"))
+                    .on_hover_text("Cancel and keep the partial data")
+                    .clicked()
+                {
+                    *action = Some(RecordAction::Cancel);
+                }
+            }
+            DownloadStatus::Queued => {
+                if ui
+                    .add(t.primary_button("Start"))
+                    .on_hover_text("Start this item now")
+                    .clicked()
+                {
+                    *action = Some(RecordAction::Start);
                 }
                 if ui
                     .add(t.subtle_button("Cancel"))
@@ -1984,7 +2000,7 @@ impl DownloadManagerApp {
                 ui.set_max_width(348.0);
                 Frame::none()
                     .fill(t.panel)
-                    .stroke(Stroke::new(1.0, t.border_strong))
+                    .stroke(Stroke::new(1.0_f32, t.border_strong))
                     .rounding(Rounding::same(theme::RADIUS_LG))
                     .inner_margin(Margin::same(14.0))
                     .shadow(egui::Shadow {
@@ -2060,7 +2076,7 @@ impl DownloadManagerApp {
                     let label = RichText::new("Remove").strong().color(Color32::WHITE);
                     let remove = egui::Button::new(label)
                         .fill(t.danger)
-                        .stroke(Stroke::new(1.0, t.danger))
+                        .stroke(Stroke::new(1.0_f32, t.danger))
                         .rounding(Rounding::same(theme::RADIUS_SM));
                     if ui.add(remove).clicked() {
                         delete = true;
@@ -2213,7 +2229,7 @@ impl DownloadManagerApp {
                         ui.add_space(12.0);
                         Frame::none()
                             .fill(theme::tint(t.danger, if t.dark { 26 } else { 18 }))
-                            .stroke(Stroke::new(1.0, theme::tint(t.danger, 90)))
+                            .stroke(Stroke::new(1.0_f32, theme::tint(t.danger, 90)))
                             .rounding(Rounding::same(theme::RADIUS_MD))
                             .inner_margin(Margin::symmetric(12.0, 9.0))
                             .show(ui, |ui| {
@@ -2258,7 +2274,7 @@ fn brand_mark(ui: &mut Ui, accent: Color32, size: f32) {
     ui.painter().circle_stroke(
         rect.center(),
         size / 2.0 - 1.0,
-        Stroke::new(1.0, theme::tint(Color32::WHITE, 70)),
+        Stroke::new(1.0_f32, theme::tint(Color32::WHITE, 70)),
     );
     ui.painter().text(
         rect.center(),
@@ -2320,7 +2336,7 @@ fn file_badge(ui: &mut Ui, record: &DownloadRecord) {
     ui.painter().rect_stroke(
         rect,
         Rounding::same(theme::RADIUS_MD),
-        Stroke::new(1.0, theme::tint(color, 150)),
+        Stroke::new(1.0_f32, theme::tint(color, 150)),
     );
     ui.painter().text(
         rect.center(),
@@ -2365,7 +2381,7 @@ fn detail_row(ui: &mut Ui, t: &theme::Tokens, label: &str, value: &str) {
 fn danger_banner(ui: &mut Ui, t: &theme::Tokens, title: &str, message: &str, hint: &str) {
     Frame::none()
         .fill(theme::tint(t.danger, if t.dark { 26 } else { 18 }))
-        .stroke(Stroke::new(1.0, theme::tint(t.danger, 90)))
+        .stroke(Stroke::new(1.0_f32, theme::tint(t.danger, 90)))
         .rounding(Rounding::same(theme::RADIUS_LG))
         .inner_margin(Margin::symmetric(16.0, 14.0))
         .show(ui, |ui| {
@@ -2456,7 +2472,7 @@ fn app_icon(ui: &mut Ui, name: &str, accent: Color32, size: f32) {
     ui.painter().rect_stroke(
         rect,
         Rounding::same(theme::RADIUS_MD),
-        Stroke::new(1.0, theme::tint(accent, 140)),
+        Stroke::new(1.0_f32, theme::tint(accent, 140)),
     );
     let initial = name
         .chars()
@@ -2526,7 +2542,7 @@ fn notification_card(ui: &mut Ui, t: &theme::Tokens, notification: &Notification
     let age = relative_time(notification.created_at);
     Frame::none()
         .fill(theme::tint(color, if t.dark { 22 } else { 16 }))
-        .stroke(Stroke::new(1.0, theme::tint(color, 70)))
+        .stroke(Stroke::new(1.0_f32, theme::tint(color, 70)))
         .rounding(Rounding::same(theme::RADIUS_MD))
         .inner_margin(Margin::symmetric(12.0, 9.0))
         .show(ui, |ui| {

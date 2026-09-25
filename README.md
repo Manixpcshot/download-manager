@@ -6,7 +6,7 @@ Pulse is a native Windows 10/11 download manager written in Rust. It is designed
 
 ## What is included
 
-- Native dark-first Windows desktop UI with a resizable layout, sidebar, search, sorting, cards, progress, speed and ETA.
+- Native dark-first Windows desktop UI with a resizable layout, sidebar, search, sorting, cards, progress, speed and ETA. The shell reacts to the window size: full sidebar, icon rail, then header navigation on narrow windows.
 - HTTP/HTTPS downloads through `reqwest` with Rustls certificate validation, redirect limits, timeout, proxy and custom headers.
 - HTTP Range probing and concurrent segment workers for servers that advertise byte ranges.
 - Safe pause/resume/cancel behavior, retry with exponential backoff, rate limiting, temporary segment files, atomic finalization and optional SHA-256 verification.
@@ -17,6 +17,28 @@ Pulse is a native Windows 10/11 download manager written in Rust. It is designed
 - Add URL, paste URL, drag a URL or Windows `.url` shortcut into the window, copy URL, open file, open folder, retry and delete-entry actions.
 - Settings for startup, tray behavior, download folder, concurrency, speed cap, timeout, retry count, proxy, User-Agent, headers, theme, accent and UI scale.
 - No automatic execution of downloaded installers. Opening a file is always an explicit user action.
+
+## Interface
+
+The interface is compiled Rust code rendered by `eframe/egui`. It is dark-first and fully native —
+no webview, HTML, CSS, JavaScript or browser engine is involved, and no external UI toolkit is
+linked.
+
+- **Responsive shell.** Above 1180 logical pixels the sidebar shows the full navigation with
+  labels and counters. Between 940 and 1180 it collapses into an icon rail with hover tooltips and
+  count badges. Below 940 the sidebar disappears and navigation moves into the header strip. Cards,
+  statistic tiles, the app grid and the settings column adapt to the available width.
+- **Design tokens.** `src/ui/theme.rs` resolves the palette (dark and light variants, semantic
+  states and shared radii) into a `Tokens` value, and every screen renders through those tokens, so
+  the accent color and theme switch without touching the layout.
+- **Overview cards.** The dashboard opens with totals, active items, completed items and combined
+  throughput, followed by the filter bar and download cards with progress, speed, ETA, priority,
+  connection count and contextual actions.
+- **Keyboard.** `Ctrl+N` opens the add-download dialog, `Enter` in the URL field submits it and
+  `Escape` closes the open dialog or the notification popover. Every shortcut mirrors a visible
+  button.
+- **Notifications.** The header bell shows the number of active notifications and opens a popover
+  with per-item colors and relative timestamps.
 
 ## Repository layout
 
