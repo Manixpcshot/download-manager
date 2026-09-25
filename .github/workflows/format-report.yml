@@ -1,9 +1,9 @@
 name: Format report
 
-# Temporary helper workflow. It runs rustfmt on a Linux runner, prints the resulting diff and
-# pushes the formatted sources back to this branch so the redesign can be normalized without a
-# local toolchain. It is triggered only by touching the marker file below and is deleted again in
-# a follow-up commit.
+# Temporary helper workflow. It runs rustfmt on a Linux runner and commits both the formatted
+# sources and a plain-text report back to this branch, so the redesign can be normalized without a
+# local toolchain. It is triggered only by touching the marker file below and is deleted again in a
+# follow-up commit.
 
 on:
   push:
@@ -25,23 +25,50 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt
-      - name: Check formatting
+      - name: Build report
         continue-on-error: true
-        run: cargo fmt --all -- --check
-      - name: Apply formatting
-        run: cargo fmt --all
-      - name: Show formatting diff
         run: |
-          git --no-pager diff --stat
-          git --no-pager diff
+          set +e
+          {
+            echo "## rustfmt report"
+            echo "cargo fmt version: $(cargo fmt --version 2>&1)"
+            echo "rustfmt version: $(rustfmt --version 2>&1)"
+            echo
+            echo "### cargo fmt --all -- --check"
+            cargo fmt --all -- --check 2>&1
+            echo "check exit: $?"
+            echo
+            echo "### cargo fmt --all"
+            cargo fmt --all --verbose 2>&1
+            echo "apply exit: $?"
+          } > .github/fmt-report.txt
+          cat .github/fmt-report.txt
+      - name: Collect diff
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          git add .github/fmt-report.txt
+          {
+            echo
+            echo "### git diff --stat"
+            git --no-pager diff --stat 2>&1
+            echo
+            echo "### git diff"
+            git --no-pager diff 2>&1
+          } >> .github/fmt-report.txt
+          wc -c .github/fmt-report.txt
       - name: Push formatting changes
+        if: always()
+        continue-on-error: true
         run: |
+          set +e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet; then
-            echo "Sources are already rustfmt clean."
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
             exit 0
           fi
-          git add -A
-          git commit -m "style: apply rustfmt to the redesign branch"
+          git commit -m "style: rustfmt report and formatted sources"
           git push origin "HEAD:${GITHUB_REF_NAME}"
