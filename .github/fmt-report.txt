@@ -1,0 +1,60 @@
+## rustfmt report
+cargo fmt version: rustfmt 1.9.0-stable (48a229ceae 2026-09-01)
+rustfmt version: rustfmt 1.9.0-stable (48a229ceae 2026-09-01)
+
+### cargo fmt --all -- --check
+error: `<` is interpreted as a start of generic arguments for `f32`, not a comparison
+    --> /home/runner/work/download-manager/download-manager/src/app.rs:2335:50
+     |
+2335 |     while columns > 1 && target / columns as f32 < 320.0 {
+     |                                                  ^ ------- interpreted as generic arguments
+     |                                                  |
+     |                                                  not interpreted as comparison
+     |
+help: try comparing the cast value
+     |
+2335 |     while columns > 1 && target / (columns as f32) < 320.0 {
+     |                                   +              +
+
+Error writing files: failed to resolve mod `app`: cannot parse /home/runner/work/download-manager/download-manager/src/app.rs
+check exit: 1
+
+### cargo fmt --all
+[custom-build (2021)] "/home/runner/work/download-manager/download-manager/build.rs"
+[bin (2021)] "/home/runner/work/download-manager/download-manager/src/main.rs"
+rustfmt --edition 2021 /home/runner/work/download-manager/download-manager/build.rs /home/runner/work/download-manager/download-manager/src/main.rs
+error: `<` is interpreted as a start of generic arguments for `f32`, not a comparison
+    --> /home/runner/work/download-manager/download-manager/src/app.rs:2335:50
+     |
+2335 |     while columns > 1 && target / columns as f32 < 320.0 {
+     |                                                  ^ ------- interpreted as generic arguments
+     |                                                  |
+     |                                                  not interpreted as comparison
+     |
+help: try comparing the cast value
+     |
+2335 |     while columns > 1 && target / (columns as f32) < 320.0 {
+     |                                   +              +
+
+Error writing files: failed to resolve mod `app`: cannot parse /home/runner/work/download-manager/download-manager/src/app.rs
+apply exit: 1
+
+### git diff --stat
+ .github/fmt-report.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+
+### git diff
+diff --git a/.github/fmt-report.txt b/.github/fmt-report.txt
+index d79b345..a8142fe 100644
+--- a/.github/fmt-report.txt
++++ b/.github/fmt-report.txt
+@@ -38,3 +38,9 @@ help: try comparing the cast value
+ 
+ Error writing files: failed to resolve mod `app`: cannot parse /home/runner/work/download-manager/download-manager/src/app.rs
+ apply exit: 1
++
++### git diff --stat
++ .github/fmt-report.txt | 2 ++
++ 1 file changed, 2 insertions(+)
++
++### git diff
